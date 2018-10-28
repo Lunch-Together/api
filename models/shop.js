@@ -6,8 +6,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Shop.associate = function({ Menu, Shop }) {
-    Shop.hasMany(Menu)
+  Shop.associate = function({ Menu, Shop, Group }) {
+    Shop.hasMany(Menu);
+    Shop.hasMany(Group);
   };
 
   return Shop;
