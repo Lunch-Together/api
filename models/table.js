@@ -1,13 +1,13 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  const Group = sequelize.define('Group',
+  const Table = sequelize.define('Table',
     {
       number: DataTypes.INTEGER.UNSIGNED
     }
   );
 
-  Group.associate = function({ Shop }) {
-    Group.belongsTo(Shop, {
+  Table.associate = function({ Shop }) {
+    Table.belongsTo(Shop, {
       onDelete: "CASCADE",
       foreignKey: {
         allowNull: false
@@ -15,5 +15,5 @@ module.exports = (sequelize, DataTypes) => {
     })
   };
 
-  return Group;
+  return Table;
 };
