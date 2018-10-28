@@ -6,13 +6,20 @@ module.exports = (sequelize, DataTypes) => {
     price: DataTypes.INTEGER.UNSIGNED
   });
 
-  Menu.associate = function({ Menu, Shop }) {
+  Menu.associate = function({ Menu, MenuCategory, Shop }) {
     Menu.belongsTo(Shop, {
       onDelete: "CASCADE",
       foreignKey: {
         allowNull: false
       }
     });
+
+    Menu.belongsTo(MenuCategory, {
+      onDelete: "CASCADE",
+      foreignKey: {
+        allowNull: false
+      }
+    })
   };
 
   return Menu;
