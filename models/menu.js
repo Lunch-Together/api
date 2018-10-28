@@ -3,7 +3,8 @@ module.exports = (sequelize, DataTypes) => {
   const Menu = sequelize.define('Menu', {
     name: DataTypes.STRING,
     description: DataTypes.STRING,
-    price: DataTypes.INTEGER.UNSIGNED
+    price: DataTypes.INTEGER.UNSIGNED,
+    thumbnailUrl: DataTypes.STRING
   });
 
   Menu.associate = function({ Menu, MenuCategory, Shop }) {
