@@ -32,6 +32,7 @@ app.use('/login', require('./routes/login'));
 app.use('/shops', require('./routes/shops'));
 app.use('/tables', require('./routes/tables'));
 app.use('/groups', require('./routes/groups'));
+app.use('/menu-categories', require('./routes/menuCategory'));
 app.use('/me', require('./routes/me'));
 
 // catch 404 and forward to error handler

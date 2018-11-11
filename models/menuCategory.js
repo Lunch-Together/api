@@ -3,7 +3,10 @@ module.exports = (sequelize, DataTypes) => {
 
   const MenuCategory = sequelize.define('MenuCategory',
     {
-      name: DataTypes.STRING
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false
+      }
 
     }
   );
