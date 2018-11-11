@@ -7,7 +7,9 @@ const createError = require('http-errors');
 const { Group, GroupMember } = require('../models');
 
 router.get('/', asyncHandler(async function(request, response) {
-  const groups = await Group.findAll({});
+  const groups = await Group.findAll({
+    include: [GroupMember]
+  });
   response.json({ data: groups });
 }));
 

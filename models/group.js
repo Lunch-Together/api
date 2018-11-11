@@ -7,13 +7,14 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Group.associate = function({ Table }) {
+  Group.associate = function({ GroupMember, Table }) {
     Group.belongsTo(Table, {
       onDelete: "CASCADE",
       foreignKey: {
         allowNull: false
       }
-    })
+    });
+    Group.hasMany(GroupMember)
   };
 
   return Group;
