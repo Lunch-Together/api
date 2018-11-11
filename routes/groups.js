@@ -4,11 +4,11 @@ const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const createError = require('http-errors');
 
-const { Group, GroupMember } = require('../models');
+const { Group, GroupMember, Table } = require('../models');
 
 router.get('/', asyncHandler(async function(request, response) {
   const groups = await Group.findAll({
-    include: [GroupMember]
+    include: [GroupMember, Table]
   });
   response.json({ data: groups });
 }));
