@@ -2,7 +2,10 @@
 module.exports = (sequelize, DataTypes) => {
   const Table = sequelize.define('Table',
     {
-      number: DataTypes.INTEGER.UNSIGNED
+      number: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
+      }
     }
   );
 
