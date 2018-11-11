@@ -2,11 +2,24 @@
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User',
     {
-      username: DataTypes.STRING,
-      password: DataTypes.STRING,
-      nickname: DataTypes.STRING,
+      username: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      nickname: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
       avatarUrl: DataTypes.STRING,
-      provider: DataTypes.ENUM('local', 'kakao', 'facebook', 'google')
+      provider: {
+        type: DataTypes.ENUM('local', 'kakao', 'facebook', 'google'),
+        allowNull: false,
+        defaultValue: 'local'
+      }
     }
   );
 
