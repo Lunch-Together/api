@@ -12,7 +12,8 @@ router.post('/', asyncHandler(async function(request, response) {
 }));
 
 router.get('/', asyncHandler(async function(request, response) {
-  response.json({ data: [] })
+  const tables = await Table.findAll();
+  response.json({ data: tables })
 }));
 
 router.get('/:id/qrcode', asyncHandler(async function(request, response) {
