@@ -5,7 +5,14 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const errorHandler = require('api-error-handler');
 
+// Passport
+const passportHelper = require('./helpers/passport');
+const passport = require('passport');
+
 const app = express();
+
+// Setup Passport
+passportHelper.setup(app);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -17,6 +24,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// passport
+app.use(passport.authenticate(['bearer', 'anonymous']));
 app.use('/', require('./routes/index'));
 app.use('/users', require('./routes/users'));
 app.use('/login', require('./routes/login'));
