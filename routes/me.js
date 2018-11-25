@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
+const createError = require('http-errors');
 
 const { User, Group, GroupMember, Sequelize } = require('../models');
 const { Op } = Sequelize;
@@ -37,6 +38,9 @@ router.get('/group', asyncHandler(async function(request, response) {
       }
     ]
   });
+
+  if (!group) throw createError(404, '현재 속해있는 그룹이 없습니다')
+
   response.json({ data: group });
 }));
 
