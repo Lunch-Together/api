@@ -2,8 +2,16 @@
 module.exports = (sequelize, DataTypes) => {
   const Group = sequelize.define('Group',
     {
-      paymentType: DataTypes.ENUM('dutch', 'split'),
-      states: DataTypes.ENUM('ongoing', 'payment-in-progress', 'archived')
+      paymentType: {
+        type: DataTypes.ENUM('dutch', 'split'),
+        defaultValue: 'split',
+        allowNull: false
+      },
+      states: {
+        type: DataTypes.ENUM('ongoing', 'payment-in-progress', 'archived'),
+        defaultValue: 'ongoing',
+        allowNull: false
+      }
     }
   );
 

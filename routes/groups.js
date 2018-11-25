@@ -18,7 +18,8 @@ router.post('/', asyncHandler(async function(request, response) {
   // Table ID 가 없습니다
   if (!request.body.TableId) throw new Error('테이블 번호가 없습니다');
   const group = await Group.create({
-    ...request.body
+    ...request.body,
+    states: 'ongoing'
   }, { fields: ['TableId'] });
   response.json({ data: group });
 }));
