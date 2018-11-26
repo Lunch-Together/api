@@ -1,20 +1,18 @@
-'use strict';
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
-
-const { MenuCategory } = require('../models');
+const { Menu } = require('../models');
 
 router.get('/', asyncHandler(async function(request, response) {
-  const menuCategories = await MenuCategory.findAll({});
-  response.json({ data: menuCategories });
+
 }));
 
 router.post('/', asyncHandler(async function(request, response) {
-  const menuCategory = await MenuCategory.create({
+  const menu = await Menu.create({
     ...request.body
   });
-  response.json({ data: menuCategory });
+  response.json({ data: menu });
 }));
 
 module.exports = router;
+

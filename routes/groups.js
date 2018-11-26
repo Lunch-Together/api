@@ -4,7 +4,7 @@ const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const createError = require('http-errors');
 
-const { Group, GroupMember, Table } = require('../models');
+const { Group, GroupMember, Table, User } = require('../models');
 
 router.get('/', asyncHandler(async function(request, response) {
   const groups = await Group.findAll({
@@ -61,6 +61,32 @@ router.post('/:id/join', asyncHandler(async function(request, response) {
   });
 
   response.json({ data: groupMember });
+}));
+
+/**
+ * 그룹 상세 정보
+ */
+router.get('/:id', asyncHandler(async function(request, response) {
+  const group = await Group.findOne({
+    where: { id: request.params.id },
+    include: [
+      {
+        model: GroupMember,
+        include: [
+          {
+            attributes: {
+              exclude: ['password']
+            },
+            model: User
+          }
+        ]
+      },
+      Table
+    ]
+  });
+  if (!group) throw createError(403, '존재하지 않는 그룹입니다');
+
+  response.json({ data: group })
 }));
 
 module.exports = router;

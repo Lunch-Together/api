@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
 
-const { Shop, Table, Menu } = require('../models');
+const { Shop, Table, Menu, MenuCategory } = require('../models');
 
 router.post('/', asyncHandler(async function(request, response) {
   // TODO 관리자 권한의 유저만 요청할 수 있는 API
@@ -39,7 +39,16 @@ router.get('/:id', asyncHandler(async function(request, response) {
  * 매장 메뉴 정보 리스트
  */
 router.get('/:id/menus', asyncHandler(async function(request, response) {
-  const menus = await Menu.findAll({});
+  const menus = await MenuCategory.findAll({
+    include: [
+      {
+        model: Menu,
+        where: {
+          ShopId: request.params.id
+        }
+      }
+    ]
+  });
   response.json({ data: menus });
 }));
 

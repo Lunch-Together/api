@@ -39,7 +39,7 @@ router.get('/group', asyncHandler(async function(request, response) {
     ]
   });
 
-  if (!group) throw createError(404, '현재 속해있는 그룹이 없습니다')
+  if (!group) throw createError(404, '현재 속해있는 그룹이 없습니다');
 
   response.json({ data: group });
 }));

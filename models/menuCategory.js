@@ -11,8 +11,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  MenuCategory.associate = function({}) {
-
+  MenuCategory.associate = function({ Menu }) {
+    MenuCategory.hasMany(Menu)
   };
 
   return MenuCategory;
