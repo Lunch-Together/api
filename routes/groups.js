@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const createError = require('http-errors');
+const socket = require('../helpers/socketio');
 
 const { Group, GroupMember, Table, User } = require('../models');
 
@@ -32,7 +33,7 @@ router.post('/:id/join', asyncHandler(async function(request, response) {
 
   // 그룹 정보
   const group = await Group.findOne({ where: { id: request.params.id } });
-  if (!group) throw createError('존재하지 않는 그룹입니다', 403);
+  if (!group) throw createError(403, '존재하지 않는 그룹입니다');
 
   // 리더가 있는지 확인
   const groupLeader = await GroupMember.findOne({
@@ -50,7 +51,7 @@ router.post('/:id/join', asyncHandler(async function(request, response) {
       UserId: request.user.id
     }
   });
-  if (isGroupMember) throw createError('이미 그룹에 가입되어 있습니다', 403);
+  if (isGroupMember) throw createError(403, '이미 그룹에 가입되어 있습니다');
 
   // 내가 이미 그룹에 속해 있는지 확인 후 없을때 그룹에 조인
   const role = hasGroupLeader ? 'member' : 'leader';
@@ -59,6 +60,17 @@ router.post('/:id/join', asyncHandler(async function(request, response) {
     UserId: request.user.id,
     role
   });
+
+  const member = await GroupMember.findOne({
+    where: {
+      GroupId: request.params.id,
+      UserId: request.user.id,
+    },
+    include: [{ model: User, attributes: { exclude: ['password'] } }]
+  });
+
+  // 새로운 멤버가 조인 되었을때 Socket 방에 데이터를 보내준다
+  socket.toGroup(group.id, 'new-group-member', member);
 
   response.json({ data: groupMember });
 }));
