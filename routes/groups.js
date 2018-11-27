@@ -5,10 +5,13 @@ const asyncHandler = require('express-async-handler');
 const createError = require('http-errors');
 const socket = require('../helpers/socketio');
 
-const { Group, GroupMember, Table, User, Order, Menu } = require('../models');
+const { Sequelize, Group, GroupMember, Table, User, Order, Menu } = require('../models');
+const { Op } = Sequelize;
 
 router.get('/', asyncHandler(async function(request, response) {
+  const where = request.query.q ? { ...JSON.parse(request.query.q) } : {};
   const groups = await Group.findAll({
+    where,
     include: [GroupMember, Table]
   });
   response.json({ data: groups });
@@ -17,7 +20,20 @@ router.get('/', asyncHandler(async function(request, response) {
 router.post('/', asyncHandler(async function(request, response) {
 
   // Table ID 가 없습니다
-  if (!request.body.TableId) throw new Error('테이블 번호가 없습니다');
+  if (!request.body.TableId) throw createError(412, '테이블 번호가 없습니다');
+
+  // 이미 진행중인 그룹이 있는지 확인 후 있으면 에러
+  const hasOngoingGroup = await Group.findOne({
+    where: {
+      TableId: request.body.TableId,
+      states: {
+        [Op.notIn]: ['archived']
+      }
+    }
+  });
+  if (hasOngoingGroup) throw createError(403, '이미 진행중인 테이블이 있습니다');
+
+  // 그룹 생성
   const group = await Group.create({
     ...request.body,
     states: 'ongoing'
