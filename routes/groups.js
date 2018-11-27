@@ -125,10 +125,16 @@ router.post('/:id/orders', asyncHandler(async function(request, response) {
   if (!isGroupMember) throw createError(403, '해당 그룹에 주문을 넣을 권한이 없습니다');
 
   // 추가된 주문 정보
-  const orders = await Order.bulkCreate(request.body.map(item => Object.assign({}, item, {
+  const postOrders = await Order.bulkCreate(request.body.map(item => Object.assign({}, item, {
     UserId: request.user.id,
     GroupId: group.id
   })));
+
+  // 주문 정보
+  const orders = await Order.findAll({
+    where: { id: postOrders.map(postOrder => postOrder.id) },
+    include: [Menu]
+  });
 
   // 새로운 주문 정보를 넘겨준다
   orders.forEach(order => socket.toGroup(group.id, 'new-order', order));
