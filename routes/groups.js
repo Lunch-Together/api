@@ -5,7 +5,7 @@ const asyncHandler = require('express-async-handler');
 const createError = require('http-errors');
 const socket = require('../helpers/socketio');
 
-const { Group, GroupMember, Table, User } = require('../models');
+const { Group, GroupMember, Table, User, Order, Menu } = require('../models');
 
 router.get('/', asyncHandler(async function(request, response) {
   const groups = await Group.findAll({
@@ -99,6 +99,54 @@ router.get('/:id', asyncHandler(async function(request, response) {
   if (!group) throw createError(403, '존재하지 않는 그룹입니다');
 
   response.json({ data: group })
+}));
+
+/**
+ * 그룹 메뉴 주문
+ */
+router.post('/:id/orders', asyncHandler(async function(request, response) {
+
+  // 그룹 정보 확인
+  const group = await Group.findOne({
+    where: {
+      id: request.params.id,
+      states: 'ongoing'
+    }
+  });
+  if (!group) throw createError(403, '주문을 넣을 수 없습니다');
+
+  // 그룹 멤버 여부 확인
+  const isGroupMember = await GroupMember.findOne({
+    where: {
+      GroupId: request.params.id,
+      UserId: request.user.id
+    }
+  });
+  if (!isGroupMember) throw createError(403, '해당 그룹에 주문을 넣을 권한이 없습니다');
+
+  // 추가된 주문 정보
+  const orders = await Order.bulkCreate(request.body.map(item => Object.assign({}, item, {
+    UserId: request.user.id,
+    GroupId: group.id
+  })));
+
+  // 새로운 주문 정보를 넘겨준다
+  orders.forEach(order => socket.toGroup(group.id, 'new-order', order));
+
+  response.json({ data: orders });
+}));
+
+/**
+ * 그룹 메뉴 주문 리스트
+ */
+router.get('/:id/orders', asyncHandler(async function(request, response) {
+  const orders = await Order.findAll({
+    where: {
+      GroupId: request.params.id
+    },
+    include: [Menu]
+  });
+  response.json({ data: orders });
 }));
 
 module.exports = router;

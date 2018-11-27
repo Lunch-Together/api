@@ -15,14 +15,15 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Group.associate = function({ GroupMember, Table }) {
+  Group.associate = function({ GroupMember, Table, Order }) {
     Group.belongsTo(Table, {
       onDelete: "CASCADE",
       foreignKey: {
         allowNull: false
       }
     });
-    Group.hasMany(GroupMember)
+    Group.hasMany(GroupMember);
+    Group.hasMany(Order);
   };
 
   return Group;
