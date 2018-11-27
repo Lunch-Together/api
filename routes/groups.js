@@ -118,6 +118,59 @@ router.get('/:id', asyncHandler(async function(request, response) {
 }));
 
 /**
+ * 그룹 정보를 변경할 수 있는 API
+ *
+ * 결제 방식과, 결제 상태로 변경등을 할 수 있다.
+ * 그룹 리더 혹은 관리자만 해당 API에 접근할 수 있다
+ */
+router.put('/:id', asyncHandler(async function(request, response) {
+  if (!request.user) throw createError(401, '해당 리소스에 접근할 수 없습니다');
+
+  // 해당요청을 한 유저의 권한 확인
+  const groupMember = await GroupMember.findOne({
+    where: {
+      GroupId: request.params.id,
+      UserId: request.user.id
+    }
+  });
+
+  // 리더가 아니면 해당 그룹정보를 수정할 수 없습니다
+  // TODO 관리자도 수정 가능하도록 변경
+  if (groupMember.role !== 'leader') throw createError(401, '일반 그룹 멤버는 수정할 권한이 없습니다');
+
+  const group = await Group.findOne({
+    where: {
+      id: request.params.id,
+      states: { [Op.notIn]: ['archived'] }
+    }
+  });
+
+  // 그룹 정보가 없을떄
+  if (!group) throw createError(403, '존재하지 않는 그룹입니다 입니다');
+
+  // 업데이트할 데이터에 상태 정보가 있을때
+  if (request.body.states) {
+
+    // 상태 정보 업데이트
+    group.states = request.body.states;
+    await group.save();
+
+    // 업데이트된 상태 정보를 Socket에 보내준다
+    socket.toGroup(group.id, 'update-group-states', group.states);
+  } else if (request.body.paymentType) {// 업데이트할 데이터에 결제 타입이 있을때
+
+    // 결제 방법 업데이트
+    group.paymentType = request.body.paymentType;
+    await group.save();
+
+    // 업데이트된 상태 정보를 Socket에 보내준다
+    socket.toGroup(group.id, 'update-group-paymentType', group.paymentType)
+  }
+
+  response.json({ data: group });
+}));
+
+/**
  * 그룹 메뉴 주문
  */
 router.post('/:id/orders', asyncHandler(async function(request, response) {
