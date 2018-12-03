@@ -219,7 +219,7 @@ router.get('/:id/orders', asyncHandler(async function(request, response) {
     where: {
       GroupId: request.params.id
     },
-    include: [Menu]
+    include: [Menu, { model: User, attributes: { exclude: ['password'] } }]
   });
   response.json({ data: orders });
 }));
