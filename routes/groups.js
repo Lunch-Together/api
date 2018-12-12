@@ -5,7 +5,7 @@ const asyncHandler = require('express-async-handler');
 const createError = require('http-errors');
 const socket = require('../helpers/socketio');
 
-const { Sequelize, Group, GroupMember, Table, User, Order, Menu } = require('../models');
+const { Sequelize, Group, GroupMember, Table, User, Order, Menu, GroupPurchase } = require('../models');
 const { Op } = Sequelize;
 
 router.get('/', asyncHandler(async function(request, response) {
@@ -109,7 +109,9 @@ router.get('/:id', asyncHandler(async function(request, response) {
           }
         ]
       },
-      Table
+      Table,
+      Order,
+      GroupPurchase
     ]
   });
   if (!group) throw createError(403, '존재하지 않는 그룹입니다');
@@ -223,5 +225,104 @@ router.get('/:id/orders', asyncHandler(async function(request, response) {
   });
   response.json({ data: orders });
 }));
+
+/**
+ * 그룹 결제 요청
+ */
+router.post('/:id/purchase', asyncHandler(async function(request, response) {
+
+  // 로그인 필수
+  if (!request.user) throw createError(401);
+
+  // 그룹 정보 확인
+  const group = await Group.findOne({
+    where: {
+      id: request.params.id,
+      states: 'payment-in-progress'
+    },
+    include: [GroupMember]
+  });
+  if (!group) throw createError(403, '결제를 요청할 수 업는 상태입니다');
+
+  // 그룹 멤버 여부 확인
+  const isGroupMember = await GroupMember.findOne({
+    where: {
+      GroupId: request.params.id,
+      UserId: request.user.id
+    }
+  });
+  if (!isGroupMember) throw createError(403, '해당 그룹에서 결제를 할 권한이 없습니다');
+
+  let purchasePrice = 0;
+
+  // 그룹의 결제 방법에 따라 해당 유저의 결제 금액을 결정한다
+  if (group.paymentType === 'dutch') {
+
+    // 각자가 먹은 음식 계산을 위해 해당 유저가 먹은 음식 주문 데이터를 가져온다
+    const orders = await Order.findAll({
+      where: { GroupId: group.id, UserId: request.user.id },
+      include: [Menu]
+    });
+    purchasePrice = orders.map(order => order.Menu.price)
+      .reduce((pV, cV) => pV + cV, 0);
+
+  } else if (group.paymentType === 'split') {
+
+    // 모든 금액 / 사람 수
+    const orders = await Order.findAll({
+      where: { GroupId: group.id },
+      include: [Menu]
+    });
+
+    // 해당 그룹에서 먹은 총 금액
+    const totalPrice = orders.map(order => order.Menu.price)
+      .reduce((pV, cV) => pV + cV, 0);
+    const groupMembers = group.GroupMembers.length;
+
+    // 1단위 절삭
+    purchasePrice = parseInt(totalPrice / groupMembers / 10) * 10
+  } else {
+    throw createError(403, '옳바르지 않은 결제 방법 입니다')
+  }
+
+  // TODO 지금은 결제 요청시 바로 결제 성공한 멤버로 만들어버린다, (결제 과정이 없기 떄문)
+
+  // 만약 해당 유저가 이미 결제가 되어있다면 더이상 결제 데이터를 추가하지 못하게 한다
+  let groupPurchase = await GroupPurchase.findOne({
+    where: {
+      GroupId: group.id,
+      UserId: request.user.id
+    }
+  });
+
+  if (groupPurchase) {
+    groupPurchase.states = groupPurchase.states === 'purchased' ? 'before-purchased' : 'purchased';
+  } else {
+    groupPurchase = GroupPurchase.build({
+      price: purchasePrice,
+      states: 'purchased',
+      GroupId: group.id,
+      UserId: request.user.id
+    });
+  }
+  await groupPurchase.save();
+
+  // 결제 상태 업데이트를 그룹에 알린다
+  socket.toGroup(group.id, 'update-group-purchase', groupPurchase);
+
+  // TODO 모든 멤버가 결제 했을 경우 완료 되었다는 소켓 요청을 보내준다 임시
+  const purchases = await GroupPurchase.findAll({
+    where: { GroupId: group.id, states: 'purchased' }
+  });
+  if (purchases.length === group.GroupMembers.length) {
+    socket.toGroup(group.id, 'update-group-states', 'archived');
+    group.states = 'archived';
+    await group.save();
+  }
+
+
+  response.json({ data: groupPurchase });
+}));
+
 
 module.exports = router;
