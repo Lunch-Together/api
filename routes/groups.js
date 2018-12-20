@@ -204,7 +204,7 @@ router.post('/:id/orders', asyncHandler(async function(request, response) {
   // 주문 정보
   const orders = await Order.findAll({
     where: { id: postOrders.map(postOrder => postOrder.id) },
-    include: [Menu]
+    include: [Menu, { model: User, attributes: { exclude: ['password'] } }]
   });
 
   // 새로운 주문 정보를 넘겨준다
